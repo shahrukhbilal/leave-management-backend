@@ -30,20 +30,22 @@ router.get('/', async (req, res) => {
 
 
 // ✅ Update Leave Status (Admin action)
-router.put('/:id', async (req, res) => {
+// ✅ Apply for Leave
+router.post('/', async (req, res) => {
   try {
-    const leave = await Leave.findById(req.params.id);
-    if (!leave) {
-      return res.status(404).json({ message: "Leave not found" });
-    }
-    
-    leave.status = req.body.status;
-    await leave.save();
-    res.json({ message: 'Status updated', leave });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const { userId, reason, fromDate, toDate } = req.body;
+
+    const newLeave = new Leave({ userId, reason, fromDate, toDate });
+
+    await newLeave.save();
+
+    res.status(201).json({ message: 'Leave applied!', newLeave });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message });
   }
 });
+
 
 // ✅ Get Single Leave by ID
 router.get('/:id', async (req, res) => {

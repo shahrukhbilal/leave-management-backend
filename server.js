@@ -3,31 +3,31 @@ const app = express();
 const port = 5000;
 const cors = require('cors');
 
-const authRoutes = require('./routes/authRoutes');
+require('dotenv').config();
+const dbconnection = require('./dbconnection');
 
+// ROUTES
+const authRoutes = require('./routes/authRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const adminRoutes = require('./routes/adminRoutes');
- const leaveRoutes = require('./routes/leaveManagementRoutes')
-const dbconnection = require('./dbconnection');
-require('dotenv').config();
+const leaveRoutes = require('./routes/leaveManagementRoutes'); // ✅ this is important
 
 // Middleware
 app.use(express.json());
 app.use(cors());
 
-// Database connection
+// Connect DB
 dbconnection();
 
-// Routes
-app.use('/api', authRoutes);         // ✅ /api/login and /api/register
-app.use('/api/leaves', leaveRoutes);
+// Mount Routes
+app.use('/api', authRoutes);                // /api/login, /api/register
+app.use('/api/leaves', leaveRoutes);        // /api/leaves/ping, /api/leaves (POST)
 app.use('/api/attendance', attendanceRoutes);
-app.use('/api/admin', adminRoutes);  // ✅ /api/admin/employees
-app.use('/api', adminRoutes);
-app.use('/api', eventRoutes);        // ✅ /api/events or whatever is inside eventRoutes
+app.use('/api/admin', adminRoutes);
+app.use('/api/events', eventRoutes);        // Use this only if routes begin with `/` in file
 
-// Start server
+// Start Server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });
