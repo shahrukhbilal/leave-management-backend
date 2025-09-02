@@ -3,42 +3,53 @@ const router = express.Router(); // Creating route object
 const bcrypt = require('bcryptjs'); // To hash and compare passwords
 const jwt = require('jsonwebtoken'); // To generate and verify tokens
 const User = require('../models/userModel'); // Importing user model
+const JWT_SECRET = process.env.JWT_SECRET;
+
+
 
 
 
 // ========== REGISTER ROUTE ==========
-router.post('/register', async (req, res) => {
-     console.log("Request body received:", req.body); 
-     
+router.post("/register", async (req, res) => {
   try {
-     console.log('Request body:', req.body);
-    const { name, email, password, role } = req.body;
-    if (!name || !email || !password  || !role) {
-  return res.status(400).json({ message: 'Please provide all fields' });
-}
+    const { name, email, password, role,secretKey } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    // ✅ lowercase email for consistency
+    const userEmail = email.toLowerCase();
+if (role === "admin") {
+      if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+        return res.status(400).json({ message: "Invalid Admin Secret Key" });
+      }
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check if already exists
+    const existingUser = await User.findOne({ email: userEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-    const user = new User({
+    // ✅ Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const newUser = new User({
       name,
-      email,
+      email: userEmail,
       password: hashedPassword,
       role,
+      secretKey
     });
 
-    await user.save();
+    await newUser.save();
 
-    res.status(201).json({ message: 'Registered successfully', user });
+    res.status(201).json({ message: "User registered successfully!" });
   } catch (err) {
-    console.error('Registration error:', err); // <-- log error
-    res.status(500).json({ message: 'Something went wrong', error: err.message });
+    console.error("Register error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
 
 /// ========== LOGIN ROUTE (Unified) ==========
 router.post('/login', async (req, res) => {
@@ -54,17 +65,20 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user._id }, JWT_SECRET , { expiresIn: '1d' });
 
     // ✅ Must include role in response
-    res.status(200).json({
-      user: {
-        email: user.email,
-        role: user.role
-      },
-      token
-    });
+   res.json({
+  token,
+  user: {
+    _id: user._id,
+    email: user.email,
+    role: user.role
+  }
+});
+
 
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
+  console.error("Login error:", error); // ⬅️ Log the actual error
+  res.status(500).json({ message: 'Server error' });
+}
 
 });
 module.exports = router; // Export routes

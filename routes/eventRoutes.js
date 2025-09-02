@@ -15,7 +15,7 @@ router.post('/events', async (req, res) => {
 });
 
 // 📥 Get all events
-router.get('/events', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const events = await Event.find();
     res.json(events);

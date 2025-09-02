@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['employee', 'admin'], // Only these roles are allowed
     default: 'employee' // Default role
-  }
+  },
+  
 });
 
 // Step 2: Export model
